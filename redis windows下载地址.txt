@@ -1,1 +1,3 @@
-https://github.com/dmajkic/redis/downloads
+windows 版本的redishttps://github.com/dmajkic/redis/downloads
+
+redis可视化工具:https://redisdesktop.com/download
