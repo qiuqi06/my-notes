@@ -1,0 +1,12 @@
+Gson将对象转成Json对象的方法
+
+[java] view plain copy
+Gson gson=new Gson();  
+String json=gson.toJson(Student.class);  
+
+
+这种情况，如果Student属性中的某个值包含有=，会变为\u003d的情况
+
+只需将Gson的初始化修改为
+[java] view plain copy
+Gson gson = new GsonBuilder().disableHtmlEscaping().create();  
