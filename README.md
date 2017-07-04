@@ -24,3 +24,15 @@
 ### mysql问题相关
 
 * 1.<a href="https://github.com/Fancyiscrying/my-notes/blob/master/mysql性能优化.txt">mysql性能优化.txt</a>
+
+* 2.<a href="https://github.com/Fancyiscrying/my-notes/blob/master/MySQL 性能优化.jpeg">MySQL 性能优化.jpeg</a>
+
+
+### JVM原理
+
+* 1.<a href="https://github.com/Fancyiscrying/my-notes/blob/master/jvm堆区对象转换图.png">jvm堆区对象转换图.png</a>
+
+
+### 消息队列
+
+* 1.<a href="https://github.com/Fancyiscrying/my-notes/blob/master/消息队列如何保证消息不丢失.jpg">消息队列如何保证消息不丢失.jpg</a>
