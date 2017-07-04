@@ -8,7 +8,7 @@
 
 * 1.<a href="https://github.com/Fancyiscrying/my-notes/blob/master/java会问的面试题.txt">java会问的面试题.txt</a>
 
-* 1.<a href="https://github.com/Fancyiscrying/my-notes/blob/master/java会问的面试题2.txt">java会问的面试题.txt</a>
+* 1.<a href="https://github.com/Fancyiscrying/my-notes/blob/master/java会问的面试题2.txt">java会问的面试题2.txt</a>
 
 * 3.<a href="https://github.com/Fancyiscrying/my-notes/blob/master/HashMap和HashTable和List等区别.png">HashMap和HashTable和List等区别.png</a>
 
