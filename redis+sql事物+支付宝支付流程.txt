@@ -1,0 +1,730 @@
+（1）什么是redis?
+
+ 
+
+Redis 是一个基于内存的高性能key-value数据库。 (有空再补充，有理解错误或不足欢迎指正)
+
+
+（2）Reids的特点
+
+Redis本质上是一个Key-Value类型的内存数据库，很像memcached，整个数据库统统加载在内存当中进行操作，定期通过异步操作把数据库数据flush到硬盘上进行保存。因为是纯内存操作，Redis的性能非常出色，每秒可以处理超过 10万次读写操作，是已知性能最快的Key-Value DB。
+Redis的出色之处不仅仅是性能，Redis最大的魅力是支持保存多种数据结构，此外单个value的最大限制是1GB，不像 memcached只能保存1MB的数据，因此Redis可以用来实现很多有用的功能，比方说用他的List来做FIFO双向链表，实现一个轻量级的高性 能消息队列服务，用他的Set可以做高性能的tag系统等等。另外Redis也可以对存入的Key-Value设置expire时间，因此也可以被当作一 个功能加强版的memcached来用。
+Redis的主要缺点是数据库容量受到物理内存的限制，不能用作海量数据的高性能读写，因此Redis适合的场景主要局限在较小数据量的高性能操作和运算上。
+
+ 
+
+
+（3）Redis支持的数据类型
+
+Redis通过Key-Value的单值不同类型来区分, 以下是支持的类型:
+Strings
+Lists
+Sets 求交集、并集
+Sorted Set 
+hashes
+
+
+
+（4）为什么redis需要把所有数据放到内存中？
+
+Redis为了达到最快的读写速度将数据都读到内存中，并通过异步的方式将数据写入磁盘。所以redis具有快速和数据持久化的特征。如果不将数据放在内存中，磁盘I/O速度为严重影响redis的性能。在内存越来越便宜的今天，redis将会越来越受欢迎。
+如果设置了最大使用的内存，则数据已有记录数达到内存限值后不能继续插入新值。
+
+
+ 
+
+
+（5）Redis是单进程单线程的
+
+redis利用队列技术将并发访问变为串行访问，消除了传统数据库串行控制的开销
+
+ 
+
+
+（6）虚拟内存
+
+当你的key很小而value很大时,使用VM的效果会比较好.因为这样节约的内存比较大.
+当你的key不小时,可以考虑使用一些非常方法将很大的key变成很大的value,比如你可以考虑将key,value组合成一个新的value.
+vm-max-threads这个参数,可以设置访问swap文件的线程数,设置最好不要超过机器的核数,如果设置为0,那么所有对swap文件的操作都是串行的.可能会造成比较长时间的延迟,但是对数据完整性有很好的保证.
+
+自己测试的时候发现用虚拟内存性能也不错。如果数据量很大，可以考虑分布式或者其他数据库
+
+ 
+
+
+（7）分布式
+
+redis支持主从的模式。原则：Master会将数据同步到slave，而slave不会将数据同步到master。Slave启动时会连接master来同步数据。
+
+这是一个典型的分布式读写分离模型。我们可以利用master来插入数据，slave提供检索服务。这样可以有效减少单个机器的并发访问数量
+
+
+（8）读写分离模型
+
+通过增加Slave DB的数量，读的性能可以线性增长。为了避免Master DB的单点故障，集群一般都会采用两台Master DB做双机热备，所以整个集群的读和写的可用性都非常高。
+读写分离架构的缺陷在于，不管是Master还是Slave，每个节点都必须保存完整的数据，如果在数据量很大的情况下，集群的扩展能力还是受限于单个节点的存储能力，而且对于Write-intensive类型的应用，读写分离架构并不适合。
+
+
+                                                                 
+
+（9）数据分片模型
+
+为了解决读写分离模型的缺陷，可以将数据分片模型应用进来。
+
+可以将每个节点看成都是独立的master，然后通过业务实现数据分片。
+
+结合上面两种模型，可以将每个master设计成由一个master和多个slave组成的模型。
+
+ （10）Redis的回收策略
+
+ 
+
+volatile-lru：从已设置过期时间的数据集（server.db[i].expires）中挑选最近最少使用的数据淘汰
+
+volatile-ttl：从已设置过期时间的数据集（server.db[i].expires）中挑选将要过期的数据淘汰
+
+volatile-random：从已设置过期时间的数据集（server.db[i].expires）中任意选择数据淘汰
+
+allkeys-lru：从数据集（server.db[i].dict）中挑选最近最少使用的数据淘汰
+
+allkeys-random：从数据集（server.db[i].dict）中任意选择数据淘汰
+
+no-enviction（驱逐）：禁止驱逐数据
+
+1. 使用Redis有哪些好处？
+
+(1) 速度快，因为数据存在内存中，类似于HashMap，HashMap的优势就是查找和操作的时间复杂度都是O(1)
+
+(2) 支持丰富数据类型，支持string，list，set，sorted set，hash
+
+(3) 支持事务，操作都是原子性，所谓的原子性就是对数据的更改要么全部执行，要么全部不执行
+
+(4) 丰富的特性：可用于缓存，消息，按key设置过期时间，过期后将会自动删除
+
+
+2. redis相比memcached有哪些优势？
+
+(1) memcached所有的值均是简单的字符串，redis作为其替代者，支持更为丰富的数据类型
+
+(2) redis的速度比memcached快很多
+
+(3) redis可以持久化其数据
+
+
+3. redis常见性能问题和解决方案：
+
+(1) Master最好不要做任何持久化工作，如RDB内存快照和AOF日志文件
+
+(2) 如果数据比较重要，某个Slave开启AOF备份数据，策略设置为每秒同步一次
+
+(3) 为了主从复制的速度和连接的稳定性，Master和Slave最好在同一个局域网内
+
+(4) 尽量避免在压力很大的主库上增加从库
+
+(5) 主从复制不要用图状结构，用单向链表结构更为稳定，即：Master <- Slave1 <- Slave2 <- Slave3...
+
+这样的结构方便解决单点故障问题，实现Slave对Master的替换。如果Master挂了，可以立刻启用Slave1做Master，其他不变。
+
+
+
+ 
+
+4. MySQL里有2000w数据，redis中只存20w的数据，如何保证redis中的数据都是热点数据
+
+ 相关知识：redis 内存数据集大小上升到一定大小的时候，就会施行数据淘汰策略。redis 提供 6种数据淘汰策略：
+
+voltile-lru：从已设置过期时间的数据集（server.db[i].expires）中挑选最近最少使用的数据淘汰
+
+volatile-ttl：从已设置过期时间的数据集（server.db[i].expires）中挑选将要过期的数据淘汰
+
+volatile-random：从已设置过期时间的数据集（server.db[i].expires）中任意选择数据淘汰
+
+allkeys-lru：从数据集（server.db[i].dict）中挑选最近最少使用的数据淘汰
+
+allkeys-random：从数据集（server.db[i].dict）中任意选择数据淘汰
+
+no-enviction（驱逐）：禁止驱逐数据
+
+ 
+
+5. Memcache与Redis的区别都有哪些？
+
+1)、存储方式
+
+Memecache把数据全部存在内存之中，断电后会挂掉，数据不能超过内存大小。
+
+Redis有部份存在硬盘上，这样能保证数据的持久性。
+
+2)、数据支持类型
+
+Memcache对数据类型支持相对简单。
+
+Redis有复杂的数据类型。
+
+3)、使用底层模型不同
+
+它们之间底层实现方式 以及与客户端之间通信的应用协议不一样。
+
+Redis直接自己构建了VM 机制 ，因为一般的系统调用系统函数的话，会浪费一定的时间去移动和请求。
+
+4），value大小
+
+redis最大可以达到1GB，而memcache只有1MB
+
+
+
+6. Redis 常见的性能问题都有哪些？如何解决？
+
+ 
+
+1).Master写内存快照，save命令调度rdbSave函数，会阻塞主线程的工作，当快照比较大时对性能影响是非常大的，会间断性暂停服务，所以Master最好不要写内存快照。
+
+ 
+
+2).Master AOF持久化，如果不重写AOF文件，这个持久化方式对性能的影响是最小的，但是AOF文件会不断增大，AOF文件过大会影响Master重启的恢复速度。Master最好不要做任何持久化工作，包括内存快照和AOF日志文件，特别是不要启用内存快照做持久化,如果数据比较关键，某个Slave开启AOF备份数据，策略为每秒同步一次。
+
+ 
+
+3).Master调用BGREWRITEAOF重写AOF文件，AOF在重写的时候会占大量的CPU和内存资源，导致服务load过高，出现短暂服务暂停现象。
+
+4). Redis主从复制的性能问题，为了主从复制的速度和连接的稳定性，Slave和Master最好在同一个局域网内
+
+
+
+
+7, redis 最适合的场景
+
+ 
+
+Redis最适合所有数据in-momory的场景，虽然Redis也提供持久化功能，但实际更多的是一个disk-backed的功能，跟传统意义上的持久化有比较大的差别，那么可能大家就会有疑问，似乎Redis更像一个加强版的Memcached，那么何时使用Memcached,何时使用Redis呢?
+
+       如果简单地比较Redis与Memcached的区别，大多数都会得到以下观点：
+
+     1 、Redis不仅仅支持简单的k/v类型的数据，同时还提供list，set，zset，hash等数据结构的存储。
+     2 、Redis支持数据的备份，即master-slave模式的数据备份。
+     3 、Redis支持数据的持久化，可以将内存中的数据保持在磁盘中，重启的时候可以再次加载进行使用。
+
+（1）、会话缓存（Session Cache）
+
+最常用的一种使用Redis的情景是会话缓存（session cache）。用Redis缓存会话比其他存储（如Memcached）的优势在于：Redis提供持久化。当维护一个不是严格要求一致性的缓存时，如果用户的购物车信息全部丢失，大部分人都会不高兴的，现在，他们还会这样吗？
+
+幸运的是，随着 Redis 这些年的改进，很容易找到怎么恰当的使用Redis来缓存会话的文档。甚至广为人知的商业平台Magento也提供Redis的插件。
+
+（2）、全页缓存（FPC）
+
+除基本的会话token之外，Redis还提供很简便的FPC平台。回到一致性问题，即使重启了Redis实例，因为有磁盘的持久化，用户也不会看到页面加载速度的下降，这是一个极大改进，类似PHP本地FPC。
+
+再次以Magento为例，Magento提供一个插件来使用Redis作为全页缓存后端。
+
+此外，对WordPress的用户来说，Pantheon有一个非常好的插件  wp-redis，这个插件能帮助你以最快速度加载你曾浏览过的页面。
+
+（3）、队列
+
+Reids在内存存储引擎领域的一大优点是提供 list 和 set 操作，这使得Redis能作为一个很好的消息队列平台来使用。Redis作为队列使用的操作，就类似于本地程序语言（如Python）对 list 的 push/pop 操作。
+
+如果你快速的在Google中搜索“Redis queues”，你马上就能找到大量的开源项目，这些项目的目的就是利用Redis创建非常好的后端工具，以满足各种队列需求。例如，Celery有一个后台就是使用Redis作为broker，你可以从这里去查看。
+
+（4），排行榜/计数器
+
+Redis在内存中对数字进行递增或递减的操作实现的非常好。集合（Set）和有序集合（Sorted Set）也使得我们在执行这些操作的时候变的非常简单，Redis只是正好提供了这两种数据结构。所以，我们要从排序集合中获取到排名最靠前的10个用户–我们称之为“user_scores”，我们只需要像下面一样执行即可：
+
+当然，这是假定你是根据你用户的分数做递增的排序。如果你想返回用户及用户的分数，你需要这样执行：
+
+ZRANGE user_scores 0 10 WITHSCORES
+
+Agora Games就是一个很好的例子，用Ruby实现的，它的排行榜就是使用Redis来存储数据的，你可以在这里看到。
+
+（5）、发布/订阅
+
+最后（但肯定不是最不重要的）是Redis的发布/订阅功能。发布/订阅的使用场景确实非常多。我已看见人们在社交网络连接中使用，还可作为基于发布/订阅的脚本触发器，甚至用Redis的发布/订阅功能来建立聊天系统！（不，这是真的，你可以去核实）。
+
+Redis提供的所有特性中，我感觉这个是喜欢的人最少的一个，虽然它为用户提供如果此多功能。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+在MySQL 5中，终于引入了存储过程这一新特性，这将大大增强MYSQL的数据库处理能力。在本文中将指导读者快速掌握MySQL 5的存储过程的基本知识，带领用户入门。
+
+　　存储过程介绍
+
+　　存储过程是一组为了完成特定功能的SQL语句集，经编译后存储在数据库中。用户通过指定存储过程的名字并给出参数(如果该存储过程带有参数)来执行它。存储过程可由应用程序通过一个调用来执行，而且允许用户声明变量 。同时，存储过程可以接收和输出参数、返回执行存储过程的状态值，也可以嵌套调用。
+
+　　存储过程的优点
+
+　　作为存储过程，有以下这些优点：
+
+　　(1) 减少网络通信量。调用一个行数不多的存储过程与直接调用SQL语句的网络通信量可能不会有很大的差别，可是如果存储过程包含上百行SQL语句，那么其性能绝对比一条一条的调用SQL语句要高得多。
+
+　　(2) 执行速度更快。存储过程创建的时候，数据库已经对其进行了一次解析和优化。其次，存储过程一旦执行，在内存中就会保留一份这个存储过程，这样下次再执行同样的存储过程时，可以从内存中直接中读取。
+
+　　(3) 更强的安全性。存储过程是通过向用户授予权限(而不是基于表)，它们可以提供对特定数据的访问，提高代码安全，比如防止 SQL注入。
+
+　　(4) 业务逻辑可以封装存储过程中，这样不仅容易维护，而且执行效率也高
+
+　　当然存储过程也有一些缺点，比如：
+
+　　(1) 可移植性方面：当从一种数据库迁移到另外一种数据库时，不少的存储过程的编写要进行部分修改。
+
+　　(2) 存储过程需要花费一定的学习时间去学习，比如学习其语法等。
+
+　　在MySQL中，推荐使用MySQL Query Browswer(http://dev.mysql.com/doc/query-browser/en/)这个工具去进行存储过程的开发和管理。下面分步骤来学习MYSQL中的存储过程。
+
+　　1、定义存储过程的结束符
+
+　　在存储过程中，通常要输入很多SQL语句，而SQL语句中每个语句以分号来结束，因此要告诉存储过程，什么位置是意味着整个存储过程结束，所以我们在编写存储过程前，先定义分隔符，我们这里定义//为分隔符，我们使用DELIMITER //这样的语法，就可以定义结束符了，当然你可以自己定义其他喜欢的符号。
+
+　　2、如何创建存储过程
+
+　　下面先看下一个简单的例子，代码如下：
+
+复制代码
+DELIMITER //
+CREATEPROCEDURE `p2` ()
+LANGUAGE SQL
+DETERMINISTIC
+SQL SECURITY DEFINER
+COMMENT 'A procedure'
+BEGIN
+SELECT'Hello World !';
+END//
+复制代码
+　　下面讲解下存储过程的组成部分：
+
+　　1) 首先在定义好终结符后，使用CREATE PROCEDURE+存储过程名的方法创建存储过程，LANGUAGE选项指定了使用的语言，这里默认是使用SQL。
+
+　　2) DETERMINISTIC关键词的作用是，当确定每次的存储过程的输入和输出都是相同的内容时，可以使用该关键词，否则默认为NOT DETERMINISTIC。
+
+　　3) SQL SECURITY关键词，是表示调用时检查用户的权限。当值为INVOKER时，表示是用户调用该存储过程时检查，默认为DEFINER,即创建存储过程时检查。
+
+　　4) COMMENT部分是存储过程的注释说明部分。
+
+　　5) 在BEGIN END部分中，是存储过程的主体部分。
+
+　　3、调用存储过程的方法
+
+　　调用存储过程的方法很简单，只需要使用call命令即可，后面跟要调用存储过程的名称及输入的变量列表，比如：
+
+CALL stored_procedure_name (param1, param2, ....)
+CALL procedure1(10 , 'string parameter' , @parameter_var);
+　　4、修改和删除存储过程
+
+　　可以用ALTER的语法去修改存储过程的主要特征和参数，要修改其存储过程的主体部分的话，必须要先删除然后再重建。比如下面修改存储过程num_from_employee的定义。将读写权限改为MODIFIES SQL DATA，并指明调用者可以执行。代码执行如下：
+
+ALTER PROCEDURE num_from_employee
+MODIFIES SQL DATA SQL SECURITY INVOKER ;
+　　而删除存储过程的语法为使用DROP关键词即可。如下
+
+DROP PROCEDURE IF EXISTS p2;
+　　5、存储过程的参数
+
+　　下面来学习下存储过程中的参数，先看下存储过程中的参数形式，如下：
+
+　　CREATE PROCEDURE proc1 () 这个存储过程中是空的参数列表
+
+　　CREATE PROCEDURE proc1 (IN varname DATA-TYPE) 这个存储过程中有一个输出参数，名称为varname，后面是跟数据类型DATA-TYPE,IN参数是默认的，因此可以省略不写
+
+　　CREATE PROCEDURE proc1 (OUT varname DATA-TYPE) 这个存储过程中varname为输出参数
+
+　　CREATE PROCEDURE proc1 (INOUT varname DATA-TYPE) 这个存储过程中，varname既是输入参数也是输出参数
+
+　　下面具体看个例子，首先是IN输入参数的例子，如下：
+
+DELIMITER //
+CREATE PROCEDURE `proc_IN` (IN var1 INT)
+BEGIN
+    SELECT var1 + 2 AS result;
+END//
+　　输出OUT参数例子如下：
+
+DELIMITER //
+CREATE PROCEDURE `proc_OUT` (OUT var1 VARCHAR(100))
+BEGIN
+　　SET var1 = 'This is a test';
+END //
+　　IN-OUT的例子：
+
+DELIMITER //
+CREATE PROCEDURE `proc_INOUT` (OUT var1 INT)
+BEGIN
+　　SET var1 = var1 * 2;
+END //
+　　6、如何定义变量
+
+　　下面讲解下MySQL 5存储过程中，如何定义变量。必须显式地在存储过程的一开始声明变量，并指出它们的数据类型，一但声明了变量后，就可以在存储过程中使用，定义变量的语法如下：
+
+　　DECLARE varname DATA-TYPE DEFAULT defaultvalue
+
+　　举例说明：
+
+DECLARE a, b INT DEFAULT 5;
+DECLARE str VARCHAR(50);
+DECLARE today TIMESTAMP DEFAULT CURRENT_DATE;
+DECLARE v1, v2, v3 TINYINT;
+　　一旦定义好变量，就可以在存储过程中对其进行赋初值,并进行各类相关的操作，比如：
+
+复制代码
+DELIMITER //
+CREATE PROCEDURE `var_proc` (IN paramstr VARCHAR(20))
+BEGIN
+　　DECLARE a, b INT DEFAULT 5;
+　　DECLARE str VARCHAR(50);
+　　DECLARE today TIMESTAMP DEFAULT CURRENT_DATE;
+　　DECLARE v1, v2, v3 TINYINT;
+　　INSERT INTO table1 VALUES (a);
+　　SET str = 'I am a string';
+　　SELECT CONCAT(str,paramstr), today FROM table2 WHERE b>=5;
+END //
+复制代码
+　　7、MYSQL存储过程的语法结构
+
+　　MYSQL存储过程中支持IF，CASE，ITERATE，LEAVE LOOP，WHILE和REPEAT等语法结构和语句，在本文中，着重介绍IF,CASE和WHILE语法，因为它们使用的最为广泛。
+
+　　IF 语句
+
+　　if语句使用的是if…then end if的语法结构，例子如下：
+
+复制代码
+DELIMITER //
+CREATE PROCEDURE `proc_IF` (IN param1 INT)
+BEGIN
+　　DECLARE variable1 INT;
+　　SET variable1 = param1 + 1;
+　　IF variable1 = 0 THEN
+　　    SELECT variable1;
+　　END IF;
+　　IF param1 = 0 THEN
+　　    SELECT 'Parameter value = 0';
+　　ELSE
+　　    SELECT 'Parameter value <= 0';
+　　END IF;
+END //
+复制代码
+　　CASE语句
+
+　　当有很多IF语句时，就应该考虑使用CASE语句了，它是多分支选择语句，有两种写法：
+
+　　第一种写法：
+
+复制代码
+DELIMITER //
+CREATE PROCEDURE `proc_CASE` (IN param1 INT)
+BEGIN
+　　DECLARE variable1 INT;
+　　SET variable1 = param1 + 1;
+　　CASE variable1
+　　WHEN 0 THEN
+　　    INSERT INTO table1 VALUES (param1);
+　　WHEN 1 THEN
+　　    INSERT INTO table1 VALUES (variable1);
+　　ELSE
+　　    INSERT INTO table1 VALUES (99);
+　　END CASE;
+END //
+复制代码
+　　另外一种写法：
+
+复制代码
+DELIMITER //
+CREATE PROCEDURE `proc_CASE` (IN param1 INT)
+BEGIN
+　　DECLARE variable1 INT;
+　　SET variable1 = param1 + 1;
+　　CASE
+　　WHEN variable1 = 0 THEN
+　　    INSERT INTO table1 VALUES (param1);
+　　WHEN variable1 = 1 THEN
+　　    INSERT INTO table1 VALUES (variable1);
+　　ELSE
+　　    INSERT INTO table1 VALUES (99);
+　　END CASE;
+END //
+复制代码
+　　WHILE语句
+
+　　WHILE语句跟普通编程语言中的while语句差不多，例子如下：
+
+复制代码
+DELIMITER //
+CREATE PROCEDURE `proc_WHILE` (IN param1 INT)
+BEGIN
+　　DECLARE variable1, variable2 INT;
+　　SET variable1 = 0;
+　　WHILE variable1
+　　    INSERT INTO table1 VALUES (param1);
+　　    SELECT COUNT(*) INTO variable2 FROM table1;
+　　    SET variable1 = variable1 + 1;
+　　END WHILE;
+END //
+复制代码
+　　8、MYSQL存储过程中的游标
+
+　　MySQL中的游标是一个十分重要的概念。游标提供了一种对从表中检索出的数据进行操作的灵活手段，就本质而言，游标实际上是一种能从包括多条数据记录的结果集中每次提取一条记录的机制。MySQL中的游标的语法如下：
+
+DECLARE cursor-name CURSOR FOR SELECT ...; /* 声明一个游标，名称为cursor-name,并用CURSOR FOR SELECT*/
+DECLARE CONTINUE HANDLER FOR NOT FOUND /*指定当遍历完结果集后，游标如何继续处理*/
+OPEN cursor-name; /*打开游标 */
+FETCH cursor-name INTO variable [, variable]; /* 将变量赋值给游标*/
+CLOSE cursor-name; /*使用后关闭游标*/
+　一个具体的例子如下：
+
+复制代码
+DELIMITER //
+CREATE PROCEDURE `proc_CURSOR` (OUT param1 INT)
+BEGIN
+　　DECLARE a, b, c INT;
+　　DECLARE cur1 CURSOR FOR SELECT col1 FROM table1;
+　　DECLARE CONTINUE HANDLER FOR NOT FOUND SET b = 1;
+　　OPEN cur1;
+　　SET b = 0;
+　　SET c = 0;
+　　WHILE b = 0 DO
+　　    FETCH cur1 INTO a;
+　　    IF b = 0 THEN
+　　        SET c = c + a;
+　　    END IF;
+　　END WHILE;
+　　CLOSE cur1;
+　　SET param1 = c;
+END //
+复制代码
+　　其中，DECLARE cur1 CURSOR FOR SELECT col1 FROM table1;
+
+　　表示将从table1表中选取col1列的内容放到游标curl中，即每次游标遍历的结果都放在curl中，要注意游标只能向前遍历，而不能向后，并且注意，游标不能更新，最后关闭游标。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+java实现在线支付
+分类：JavaJ2EE技术HTTP
+
+ （19655）  （8）
+
+国内电子商务系统实现的基本流程如下： 
+客户在系统内下订单 -> 系统根据订单生成支付宝接口url -> 客户通过url使用支付宝（网上银行）付款 -> 支付宝将客户的付款完成信息发送给电子商务系统 -> 系统收到支付宝信息后确定客户订单已经付款 -> 进行发货等后续流程。
+
+在开始下面的内容之前,你要先有一个支付宝账户,如果要集成支付宝接口,你还必须申请开通服务(关于如何开通,可以直接到支付宝网站上申请).在服务开通后,支付宝会给你2个字符串编号:1个partnerId(合作伙伴ID),还有1个securityCode(安全码).当你拿到这2个码的时候就可以开始下面的内容了.
+（1）如何调用支付宝接口？（将客户的订单信息按照既定的规则生成一个url跳转到支付宝网站） 
+
+通过下面方法[makeOrderAlipayUrl(HttpServletRequest httpRequest,Order order)]的调用得到支付宝的url,然后进行跳转(response.sendRedirect(url);).
+
+[html] view plain copy
+/**      
+     * 根据订单生成支付宝接口URL.      
+     * @param httpRequest      
+     * @param order 订单实例      
+     * @return      
+     * @throws Exception      
+     */       
+    public static String makeOrderAlipayUrl(HttpServletRequest httpRequest,Order order) throws Exception {        
+        HashMap hm = new HashMap();        
+        hm.put("_input_charset",httpRequest.getCharacterEncoding());//采用相同的编码方式        
+        hm.put("body","您在www.xxx.com上的订单");//填写在跳到支付宝页面上显示的付款内容信息        
+        hm.put("discount","-5");//填写折扣信息 -5表示抵扣5元        
+        hm.put("logistics_fee","10");//物流费用        
+        hm.put("logistics_payment","BUYER_PAY");//物流费用支付人 BUYER_PAY=买家支付物流费用        
+        hm.put("logistics_type","EXPRESS");//物流方式        
+        hm.put("notify_url","http://www.xxx.com/notifyurl.jsp");//客户付款后,支付宝调用的页面        
+        hm.put("out_trade_no",order.getId());//外部交易号,最好具有唯一性,在获取支付宝发来的付款信息时使用.        
+        hm.put("partner",partnerId);//partnerId(合作伙伴ID)        
+        hm.put("agent",partnerId);//partnerId(合作伙伴ID)        
+        hm.put("payment_type","1");//支付类型 1=商品购买,2=服务购买,...        
+        hm.put("price","105.30");//订单金额信息        
+        hm.put("quantity","1");//订单商品数量,一般都是写1,它是按照整个订单包来计算        
+        hm.put("return_url","http://www.xxx.com/ReturnUrl.jsp");//客户付款成功后,显示给客户的页面        
+        hm.put("seller_email","alipay@xxx.com");//你的支付宝账户email        
+        hm.put("service","create_direct_pay_by_user");//create_direct_pay_by_user=直接付款,trade_create_by_buyer 担保付款         
+        hm.put("subject","www.xxx.com的订单");//填写在跳到支付宝页面上显示的付款标题信息        
+        String payGateway = "https://www.alipay.com/cooperate/gateway.do?";//跳转到支付宝的url头        
+        return makeUrl(hm,securityCode,httpRequest.getCharacterEncoding(),payGateway);//securityCode(安全码)         
+    }        
+    /**      
+     * 根据传入的参数生成alipay的支付URL      
+     * @param hm 参数值      
+     * @param securityCode 安全码      
+     * @param charset 编码      
+     * @param payGateway 支付宝gateway      
+     * @return      
+     */       
+    public static String makeUrl(HashMap hm,String securityCode,String charset,String payGateway) throws Exception{        
+        List keys = new ArrayList(hm.keySet());        
+        Collections.sort(keys);//支付宝要求参数必须按字母排序        
+        StringBuffer content = new StringBuffer();        
+        for (int i = 0; i < keys.size(); i++) {        
+            content.append((String) keys.get(i));        
+            content.append("=");        
+            content.append((String) hm.get((String) keys.get(i)));        
+            if (i != keys.size() - 1) {        
+                content.append("&");        
+            }        
+        }        
+        content.append(securityCode);        
+        String sign = md5(content.toString(),charset);        
+        content.delete(0,content.length());        
+        content.append(payGateway);        
+        for (int i = 0; i < keys.size(); i++) {        
+            content.append(keys.get(i));        
+            content.append("=");        
+            content.append(URLEncoder.encode((String) hm.get(keys.get(i)), charset));        
+            content.append("&");        
+        }        
+        content.append("&sign_type=MD5");        
+        keys.clear();        
+        keys = null;        
+        return content.toString();        
+    }        
+    /**      
+     * 生成md5编码字符串.      
+     * @param str 源字符串      
+     * @param charset 编码方式      
+     * @return      
+     *      
+     */       
+    public static String md5(String str,String charset) {        
+        if (str == null)        
+            return null;        
+        char hexDigits[] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',        
+                'a', 'b', 'c', 'd', 'e', 'f' };        
+        MessageDigest md5MessageDigest = null;        
+        byte[] md5Bytes = null;        
+        char md5Chars[] = null;        
+        byte[] strBytes = null;        
+        try {        
+            strBytes = str.getBytes(charset);        
+            md5MessageDigest = MessageDigest.getInstance("MD5");        
+            md5MessageDigest.update(strBytes);        
+            md5Bytes = md5MessageDigest.digest();        
+            int j = md5Bytes.length;        
+            md5Chars = new char[j * 2];        
+            int k = 0;        
+            for (int i = 0; i < j; i++) {        
+                byte md5Byte = md5Bytes;        
+                md5Chars[k++] = hexDigits[md5Byte >>> 4 & 0xf];        
+                md5Chars[k++] = hexDigits[md5Byte & 0xf];        
+            }        
+            return new String(md5Chars);        
+        } catch (NoSuchAlgorithmException e) {        
+            //Log.output(e.toString(), Log.STD_ERR);        
+            return null;        
+        } catch (UnsupportedEncodingException e) {        
+            //Log.output(e.toString(), Log.STD_ERR);        
+            return null;        
+        } finally {        
+            md5MessageDigest = null;        
+            strBytes = null;        
+            md5Bytes = null;        
+        }        
+    }    
+
+当客户通过接口url付款后,支付宝会自动的去调用前面提供的[notify_url]参数中的url. 
+
+（2）支付宝将付款信息返回给系统 
+当客户付款后，支付宝就会自动调用上面表单提供的[notify_url]，下面是一个[notifyurl.jsp]的一个例子：
+[html] view plain copy
+<%@ page contentType="text/html;charset=UTF-8"%><%@ page import="com.soft4j.AlipayMgr"%><%        
+    String ret = AlipayMgr.insert(request);        
+    if(ret==null){        
+        out.print("success");//成功接收支付宝发来的付款信息        
+    }else{        
+        out.print("fail");//出错        
+    }        
+%>  
+
+如果确认收到支付宝发来的客户付款信息，则返回"success"，这样子支付宝就知道系统已经收到信息了；否则返回"fail"，这样支付宝会过一段时间后再次发来。其实，只有当支付宝收到"success"的返回信息后才会停止发送付款信息，否则会自动的每隔一段时间就调用上面 
+的[notify_url]通信接口。 
+
+（3）系统处理支付宝发来的付款信息 
+[java] view plain copy
+/*     
+ * Created on 2005-6-12     
+ * Author stephen     
+ * Email zhoujianqiang AT gmail DOT com     
+ * CopyRight(C)2005-2008 , All rights reserved.     
+ */       
+package com.soft4j;        
+import java.sql.Connection;        
+import java.sql.SQLException;        
+import java.util.Enumeration;        
+import java.util.Vector;        
+import javax.servlet.http.HttpServletRequest;        
+/**     
+ * 支付宝付款通知接口.     
+ *      
+ * @author stephen     
+ * @version 1.0.0     
+ */       
+public final class NotifyUrlMgr {        
+    public static String insert(HttpServletRequest httpRequest) {        
+        //定义变量和进行必要的初始化工作        
+        Enumeration parameterNames = null;        
+        String parameterName = null;        
+        String parameterValue = null;        
+        int count = 0;        
+        Vector[] params = null;        
+        Vector vParameterName = new Vector();        
+        Vector vParameterValue = new Vector();        
+        try {        
+            String orderId = httpRequest.getParameter("out_trade_no");//订单号        
+            if(orderId==null||"".equals(orderId)) orderId="-1";        
+            parameterNames = httpRequest.getParameterNames();        
+            boolean isPrint = false;        
+            while (parameterNames.hasMoreElements()) {//循环收取支付宝发来的所有参数信息        
+                parameterName = (String) parameterNames.nextElement();        
+                parameterValue = httpRequest.getParameter(parameterName);        
+                if(parameterValue==null) parameterValue="";        
+                vParameterName.add(parameterName);        
+                vParameterValue.add(parameterValue);        
+                count++;        
+            }        
+            //这里添加对收到信息的处理:一般是将这些信息存入数据库,然后对客户的订单进行处理.        
+            return null;        
+        } catch (Exception e) {        
+            return e.toString();        
+        } finally {         
+        }        
+    }        
+}   
