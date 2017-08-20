@@ -40,3 +40,8 @@
 ### 消息队列
 
 * 1.<a href="https://github.com/Fancyiscrying/my-notes/blob/master/消息队列如何保证消息不丢失.jpg">消息队列如何保证消息不丢失.jpg</a>
+
+
+
+##  高并发的问题相关
+* 1.<a href="https://github.com/Fancyiscrying/my-notes/blob/master/高并发请求.txt">高并发请求</a>
