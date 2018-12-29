@@ -34,20 +34,24 @@ set autowrite "在切换buffer时自动保存当前文件
 set wildmenu  "增强模式中的命令行自动完成操作
 set linespace=2 "字符间插入的像素行数目
 set whichwrap=b,s,<,>,[,] "开启normal 或visual模式下的backspace键空格键，左右方向键,insert或replace模式下的左方向键，右方向键的跳行功能
-filetype plugin indent on "分为三部分命令:file on,file plugin on,file indent on 分别是自动识别文件类型, 用用文件类型脚本,使用缩进定义文件
+"分为三部分命令:file on,file plugin on,file indent on 分别是自动识别文件类型, 用用文件类型脚本,使用缩进定义文件
+filetype on "打开文件类型检测功能
+filetype plugin on 
+filetype indent on 
+
 set foldenable  "允许折叠
 set cursorline "突出显示当前行
 set magic  "设置魔术？神马东东
 set ignorecase "搜索忽略大小写
-filetype on "打开文件类型检测功能
+
 set background=dark
 set t_Co=256   "256色
-set mouse=v  "允许鼠标
+set mouse=a  "允许鼠标
 "===============================
 execute pathogen#infect()
 syntax on
-filetype plugin indent on
-filetype plugin on 
+
+
 "启动vim显示nerdtree
 autocmd VimEnter * NERDTree
 " 按下 ctrl+b 显示/隐藏 NERDTree
@@ -81,8 +85,14 @@ let OmniCpp_MayCompleteScope = 1 " 输入 :: 后自动补全
 let OmniCpp_DefaultNamespaces = ["std", "_GLIBCXX_STD"]
 set completeopt=menuone,menu,longest
 "================================
-
-
+set notcompatbile
+set nobackup
+set noswapfile
+set autoread
+set autowrite
+set hlsearch
+set incsearch
+set enc=utf-8
 
 
 
